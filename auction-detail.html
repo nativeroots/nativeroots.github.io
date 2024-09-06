@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Detail - Bidcoin</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="wallet.js"></script>
+    <script src="auction-tracking.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">Bidcoin Auction Marketplace</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="auction-listing.html">Auctions</a></li>
+                <li><a href="howitworks.html">How It Works</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </nav>
+        <div class="wallet-dropdown">
+            <span class="wallet-address" id="walletAddress">Connect Wallet</span>
+            <div class="dropdown-content" id="walletDropdown">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="#" id="disconnectWallet">Disconnect</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="auction-page">
+        <div class="auction-left">
+            <section class="auction-item">
+                <h1 id="auctionName">Loading...</h1>
+                <img id="auctionImage" src="" alt="Auction Item">
+                <div class="auction-timer">
+                    <h2>Time Remaining</h2>
+                    <div id="countdown" class="countdown">00:00:00</div>
+                </div>
+            </section>
+
+            <section class="bid-info">
+                <p class="current-bid">Current Bid: <span id="current-bid-amount">Loading...</span></p>
+                <p class="total-bids">Total Bids: <span id="total-bids">0</span></p>
+                <div class="no-new-bidders">No new bidders after <span id="max-bid">Loading...</span></div>
+                
+                <div class="auction-actions">
+                    <button id="place-bid-btn" class="btn bid">Place Bid</button>
+                    <button id="track-auction-btn" class="btn track-auction">Track Auction</button>
+                </div>
+
+                <div class="highest-bidder">
+                    <h2>Highest Bidder</h2>
+                    <p id="highest-bidder-name">Loading...</p>
+                </div>
+                <div class="bid-list">
+                    <h2>Recent Bids</h2>
+                    <ul id="recent-bids">
+                        <li>Loading recent bids...</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+        <div class="auction-right">
+            <section class="auction-rules collapsible-section">
+                <h2 class="collapsible-header">Auction Rules <span class="toggle-icon">+</span></h2>
+                <div class="collapsible-content">
+                    <h3>No Jumper Bidding</h3>
+                    <p>Bidding is locked for new participants once the current price reaches 5-10% of the item's fair value. This prevents late entries from disrupting the dynamics established by early bidders.</p>
+                    <h3>Newbies-Only Auction</h3>
+                    <p>Bidding is limited to users who have participated in 25 or fewer auctions. Once a user has participated in more than 25 auctions, they will no longer be eligible for these specific auctions.</p>
+                </div>
+            </section>
+
+            <section class="faqs collapsible-section">
+                <h2 class="collapsible-header">FAQs <span class="toggle-icon">+</span></h2>
+                <div class="collapsible-content">
+                    <h3>How to Bid</h3>
+                    <p>Connect your wallet, acquire bids, find an auction, place bids manually or use auto-bid. Bids are stacked in sequence.</p>
+                    <h3>How to Track Auction Progress</h3>
+                    <p>Use the "Track Auction" button to add the auction to your dashboard for live updates on bids and auction status.</p>
+                    <h3>Payment Options</h3>
+                    <p>Pay with Bidcoin or other supported cryptocurrencies directly from your connected wallet.</p>
+                    <h3>Can I Cancel a Winning Bid?</h3>
+                    <p>Once confirmed, winning bids are final and cancellations are not allowed.</p>
+                    <h3>I Won, Now What?</h3>
+                    <p>Arrange for pickup or delivery. Digital items may be transferred directly to your wallet.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <!-- Footer content -->
+    </footer>
+
+    <!-- Bid Modal -->
+    <div id="bidModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Place a Bid</h2>
+            <p>Auction: <span id="bidModalAuctionName"></span></p>
+            <p>Current Price: <span id="bidModalCurrentPrice"></span></p>
+            <input type="number" id="bidAmount" min="0" step="0.01" placeholder="Enter your bid">
+            <button id="placeBidBtn">Place Bid</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="main.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const auctionId = new URLSearchParams(window.location.search).get('id');
+        const BID_INCREMENT = 0.16; // Fixed bid increment
+        const PRICE_INCREMENT = 0.01; // Visible price increment
+
+        // Fetch auction details
+        fetchAuctionData(auctionId);
+
+        // Fetch the auction data using the auctionId
+        async function fetchAuctionData(auctionId) {
+            try {
+                // Retrieve all auctions from localStorage
+                const allAuctions = JSON.parse(localStorage.getItem('allAuctions')) || [];
+                const data = allAuctions.find(auction => auction.id === auctionId);
+
+                if (data) {
+                    console.log('Auction Data:', data); // Log the data for debugging
+                    displayAuctionDetails(data); // Update the page with auction data
+                } else {
+                    throw new Error('Auction not found');
+                }
+            } catch (error) {
+                console.error('Error fetching auction data:', error);
+                showErrorMessage();
+            }
+        }
+
+        // Display the fetched auction details
+        function displayAuctionDetails(data) {
+            document.getElementById('auctionName').textContent = data.name || 'Auction Item';
+            document.getElementById('auctionImage').src = data.image || 'default-image.jpg';
+            document.getElementById('current-bid-amount').textContent = data.currentPrice || '0.0 ETH';
+            document.getElementById('highest-bidder-name').textContent = data.leader || 'Unknown';
+            document.getElementById('countdown').textContent = data.timeLeft || '00:00:00';
+            document.getElementById('total-bids').textContent = data.totalBids || '0';
+
+            // Populate recent bids
+            const recentBids = data.recentBids || [];
+            const recentBidsList = document.getElementById('recent-bids');
+            recentBidsList.innerHTML = recentBids.map(bid => `<li>${bid}</li>`).join('');
+        }
+
+        // Show an error message if fetching data fails
+        function showErrorMessage() {
+            document.getElementById('auctionName').textContent = 'Failed to load auction data';
+            document.getElementById('current-bid-amount').textContent = 'NaN';
+            document.getElementById('highest-bidder-name').textContent = 'N/A';
+            document.getElementById('countdown').textContent = 'N/A';
+            document.getElementById('total-bids').textContent = '0';
+        }
+
+        // Simulate real-time updates for recent bids
+        setInterval(() => {
+            const recentBidsList = document.getElementById('recent-bids');
+            const newBid = `Bidder${Math.floor(Math.random() * 100)}: ${BID_INCREMENT.toFixed(2)} ETH`;
+            const newBidElement = document.createElement('li');
+            newBidElement.textContent = newBid;
+            recentBidsList.prepend(newBidElement);
+
+            // Limit the number of recent bids displayed
+            if (recentBidsList.children.length > 10) {
+                recentBidsList.removeChild(recentBidsList.lastChild);
+            }
+        }, 5000); // Update every 5 seconds
+
+        // Place a bid
+        document.getElementById('place-bid-btn').addEventListener('click', function() {
+            placeBid(auctionId);
+        });
+
+        async function placeBid(auctionId) {
+            try {
+                // Retrieve all auctions from localStorage
+                const allAuctions = JSON.parse(localStorage.getItem('allAuctions')) || [];
+                const auction = allAuctions.find(auction => auction.id === auctionId);
+
+                if (auction) {
+                    // Increase the current price by the visible price increment
+                    const currentPrice = parseFloat(auction.currentPrice.split(' ')[0]);
+                    const newPrice = (currentPrice + PRICE_INCREMENT).toFixed(2) + ' ' + auction.currentPrice.split(' ')[1];
+                    auction.currentPrice = newPrice;
+
+                    // Add the new bid to the recent bids list
+                    const newBid = `Bidder${Math.floor(Math.random() * 100)}: ${BID_INCREMENT.toFixed(2)} ${auction.currentPrice.split(' ')[1]}`;
+                    auction.recentBids.unshift(newBid);
+
+                    // Update the highest bidder
+                    auction.leader = `Bidder${Math.floor(Math.random() * 100)}`;
+
+                    // Increment the total bids count
+                    auction.totalBids = (auction.totalBids || 0) + 1;
+
+                    // Save the updated auctions to localStorage
+                    localStorage.setItem('allAuctions', JSON.stringify(allAuctions));
+
+                    // Update the auction details on the page
+                    displayAuctionDetails(auction);
+                } else {
+                    throw new Error('Auction not found');
+                }
+            } catch (error) {
+                console.error('Error placing bid:', error);
+                showErrorMessage();
+            }
+        }
+
+        // Update countdown timers every second
+        setInterval(updateCountdowns, 1000);
+    });
+    </script>
+</body>
+</html>

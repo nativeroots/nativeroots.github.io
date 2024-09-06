@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Listings - Bidcoin</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auction-listing.css">
+    <script src="bid-module.js"></script>
+    <script src="auction-tracking.js"></script>
+    <script src="wallet.js"></script> <!-- Include the centralized wallet script -->
+</head>
+<body>
+    <header>
+        <div class="logo">Bidcoin Auction Marketplace</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="auction-listing.html">Auctions</a></li>
+                <li><a href="howitworks.html">How It Works</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </nav>
+        <div class="wallet-dropdown">
+            <span class="wallet-address" id="walletAddress">Connect Wallet</span>
+            <div class="dropdown-content" id="walletDropdown">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="#" id="disconnectWallet">Disconnect</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="auction-listings">
+        <h1>Current Auctions</h1>
+        
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search... (Bitcoin, 500 $Bidcoin, etc.)">
+            <button class="filter-button" id="searchButton">Filter</button>
+        </div>
+
+        <!-- New filter section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>TAGS</label>
+                <div class="filter-options">
+                    <label><input type="checkbox" name="tag" value="first-win"> First Win</label>
+                    <label><input type="checkbox" name="tag" value="newbies"> Newbies</label>
+                    <label><input type="checkbox" name="tag" value="bam-pros"> BAM Pros</label>
+                    <label><input type="checkbox" name="tag" value="may-days"> May Days</label>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label>TYPE</label>
+                <div class="filter-options">
+                    <label><input type="checkbox" name="type" value="crypto"> Crypto</label>
+                    <label><input type="checkbox" name="type" value="nfts"> NFTs</label>
+                    <label><input type="checkbox" name="type" value="ordinals"> Ordinals</label>
+                    <label><input type="checkbox" name="type" value="rw"> RWAs</label>
+                    <label><input type="checkbox" name="type" value="mystery"> Mystery</label>
+                    <label><input type="checkbox" name="type" value="whitelists"> Whitelists</label>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label>PRICE</label>
+                <div class="filter-options">
+                    <label>Between <input type="number" name="price-min" placeholder="0.00"> and <input type="number" name="price-max" placeholder="0.00"></label>
+                    <select name="currency">
+                        <option value="sol">SOL</option>
+                        <option value="eth">ETH</option>
+                        <option value="btc">BTC</option>
+                    </select>
+                    <label><input type="checkbox" name="hide-no-new-bidders"> Hide No New Bidders</label>
+                </div>
+            </div>
+        </div>
+
+        <section class="auction-row" id="auctionList">
+            <!-- Auction items will be dynamically inserted here -->
+        </section>
+
+        <nav class="pagination">
+            <button id="prevPage" disabled>Previous</button>
+            <span id="currentPage">1</span>
+            <button id="nextPage">Next</button>
+        </nav>
+    </main>
+
+    <footer>
+        <!-- Footer content -->
+    </footer>
+
+    <!-- Bid Modal -->
+    <div id="bidModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Place a Bid</h2>
+            <p>Auction: <span id="bidModalAuctionName"></span></p>
+            <p>Current Price: <span id="bidModalCurrentPrice"></span></p>
+            <input type="number" id="bidAmount" min="0" step="0.01" placeholder="Enter your bid">
+            <button id="placeBidBtn">Place Bid</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="main.js"></script>
+    <script>
+    let currentPage = 1;
+    const itemsPerPage = 8;
+    let allAuctions = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchAndRenderAuctions();
+        initializeTracking();
+        initializeModals();
+        updateAuctionData();
+
+        document.getElementById('searchButton').addEventListener('click', handleSearch);
+        document.getElementById('prevPage').addEventListener('click', () => changePage(-1));
+        document.getElementById('nextPage').addEventListener('click', () => changePage(1));
+
+        // Update countdown timers every second
+        setInterval(updateCountdowns, 1000);
+    });
+
+    function fetchAndRenderAuctions() {
+        // Simulated auction data (replace with actual API call)
+        allAuctions = [
+            {id: '1', name: 'Lil Panz', currentPrice: '0.073 ETH', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/Y6kpM8nvuk37nBlD4FDkNUcDpbhvtJHG6Lw5j96bRcE.png', timeLeft: '00:10', leader: 'SatoshiNakamoto', recentBids: ['Bidder1: 0.070 ETH', 'Bidder2: 0.071 ETH']},
+            {id: '2', name: '500 Bids', currentPrice: '0.0001 BTC', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/bidpack.png', timeLeft: '00:09', leader: 'VitalikButerin', recentBids: ['Bidder3: 0.00009 BTC', 'Bidder4: 0.0001 BTC']},
+            {id: '3', name: 'Mad Lads', currentPrice: '4.23 SOL', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/mad-lads.jpg', timeLeft: '00:10', leader: 'CharlieLee', recentBids: ['Bidder5: 4.20 SOL', 'Bidder6: 4.22 SOL']},
+            {id: '4', name: '0.1 BTC', currentPrice: '0.015 BTC', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/bitcoin.png', timeLeft: '00:10', leader: 'BinanceCZ', recentBids: ['Bidder7: 0.014 BTC', 'Bidder8: 0.015 BTC']},
+            {id: '5', name: 'Whitelist', currentPrice: '0.073 ETH', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/whitelist.png', timeLeft: '00:03', leader: 'CryptoKitties', recentBids: ['Bidder9: 0.070 ETH', 'Bidder10: 0.072 ETH']},
+            {id: '6', name: 'Crypto Punks', currentPrice: '0.61 ETH', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/punks.jpeg', timeLeft: '00:07', leader: 'GavinWood', recentBids: ['Bidder11: 0.60 ETH', 'Bidder12: 0.61 ETH']},
+            {id: '7', name: 'Node Monkeys', currentPrice: '0.031 BTC', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/ord-nodemonkes_pfp_1705639827890.webp', timeLeft: '00:01', leader: 'AndreasAntonopoulos', recentBids: ['Bidder13: 0.030 BTC', 'Bidder14: 0.031 BTC']},
+            {id: '8', name: 'Rolex Submariner', currentPrice: '2950.58 USDC', image: 'https://bamtrial.standard.us-east-1.oortech.com/imgs/rolex11.png', timeLeft: '00:06', leader: 'NakamotoSatoshi', recentBids: ['Bidder15: 2900 USDC', 'Bidder16: 2950 USDC']},
+            // Add more auction items here...
+        ];
+
+        // Store auctions in localStorage
+        localStorage.setItem('allAuctions', JSON.stringify(allAuctions));
+
+        renderAuctions(allAuctions);
+        updatePagination();
+    }
+
+    function renderAuctions(auctions) {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const currentAuctions = auctions.slice(startIndex, endIndex);
+
+        const auctionList = document.getElementById('auctionList');
+        auctionList.innerHTML = currentAuctions.map(auction => `
+            <div class="auction-item" data-auction-id="${auction.id}">
+                <div class="auction-image-container">
+                    <a href="auction-detail.html?id=${auction.id}">
+                        <img src="${auction.image}" alt="${auction.name}">
+                    </a>
+                </div>
+                <div class="auction-details">
+                    <h3><a href="auction-detail.html?id=${auction.id}">${auction.name}</a></h3>
+                    <p class="leader">Leader: <span class="leader-name">${auction.leader}</span></p>
+                    <p class="price">Price: <span class="current-price">${auction.currentPrice}</span></p>
+                    <p class="time-left">Time Left: <span class="countdown">${auction.timeLeft}</span></p>
+                </div>
+                <div class="auction-buttons">
+                    <button class="btn btn-bid" data-auction-id="${auction.id}">Bid</button>
+                    <button class="btn btn-track" data-auction-id="${auction.id}">Track Auction</button>
+                </div>
+            </div>
+        `).join('');
+
+        updateTrackButtons();
+        addEventListeners();
+    }
+
+    function addEventListeners() {
+        const bidButtons = document.querySelectorAll('.btn-bid');
+        bidButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const auctionId = this.getAttribute('data-auction-id');
+                const auctionItem = this.closest('.auction-item');
+                const currentPrice = auctionItem.querySelector('.current-price').textContent;
+                const auctionName = auctionItem.querySelector('h3 a').textContent;
+                BidModule.showBidModal(auctionId, currentPrice, auctionName);
+            });
+        });
+
+        const trackButtons = document.querySelectorAll('.btn-track');
+        trackButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const auctionId = this.getAttribute('data-auction-id');
+                const auctionItem = this.closest('.auction-item');
+                const auctionName = auctionItem.querySelector('h3 a').textContent;
+                const currentPrice = auctionItem.querySelector('.current-price').textContent;
+                const image = auctionItem.querySelector('img').src;
+                const timeLeft = auctionItem.querySelector('.countdown').textContent;
+                const leader = auctionItem.querySelector('.leader-name').textContent;
+                toggleTrackedAuction(auctionId, auctionName, currentPrice, image, timeLeft, leader);
+            });
+        });
+    }
+
+    function handleSearch() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filteredAuctions = allAuctions.filter(auction => 
+            auction.name.toLowerCase().includes(searchTerm) ||
+            auction.currentPrice.toLowerCase().includes(searchTerm) ||
+            auction.leader.toLowerCase().includes(searchTerm)
+        );
+        currentPage = 1;
+        renderAuctions(filteredAuctions);
+        updatePagination();
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        renderAuctions(allAuctions);
+        updatePagination();
+    }
+
+    function updatePagination() {
+        const totalPages = Math.ceil(allAuctions.length / itemsPerPage);
+        document.getElementById('currentPage').textContent = currentPage;
+        document.getElementById('prevPage').disabled = (currentPage === 1);
+        document.getElementById('nextPage').disabled = (currentPage === totalPages);
+    }
+
+    function updateAuctionData() {
+        // Simulating real-time updates (replace with actual WebSocket or polling mechanism)
+        setInterval(() => {
+            const countdowns = document.querySelectorAll('.countdown');
+            countdowns.forEach(countdown => {
+                let [minutes, seconds] = countdown.textContent.split(':').map(Number);
+                if (seconds > 0) {
+                    seconds--;
+                } else if (minutes > 0) {
+                    minutes--;
+                    seconds = 59;
+                }
+                countdown.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            });
+        }, 1000);
+    }
+
+    function updateCountdowns() {
+        const countdowns = document.querySelectorAll('.countdown');
+        countdowns.forEach(countdown => {
+            let [hours, minutes, seconds] = countdown.textContent.split(':').map(Number);
+            if (seconds > 0) {
+                seconds--;
+            } else if (minutes > 0) {
+                minutes--;
+                seconds = 59;
+            } else if (hours > 0) {
+                hours--;
+                minutes = 59;
+                seconds = 59;
+            }
+            countdown.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        });
+    }
+    </script>
+</body>
+</html>

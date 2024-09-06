@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - Bidcoin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="auction-tracking.js"></script>
+    <script src="wallet.js"></script> <!-- Add the new wallet module -->
+    <style>
+        .how-it-works-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .how-it-works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .how-it-works-card {
+            background-color: var(--background-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .how-it-works-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .how-it-works-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        /* New styles for navigation bar and dropdown */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #fff;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav ul li {
+            margin-left: 1rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #000;
+        }
+
+        .wallet-dropdown {
+            position: relative;
+        }
+
+        .wallet-address {
+            cursor: pointer;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 4px;
+        }
+
+        .dropdown-content a {
+            color: #000;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Bidcoin Auction Marketplace</div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="auction-listing.html">Auctions</a></li>
+                <li><a href="howitworks.html">How It Works</a></li>
+                <li><a href="#">About</a></li>
+            </ul>
+        </nav>
+        <div class="wallet-dropdown">
+            <span class="wallet-address" id="walletAddress">Connect Wallet</span>
+            <div class="dropdown-content" id="walletDropdown">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="#" id="disconnectWallet">Disconnect</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="how-it-works-container">
+        <h1>How It Works</h1>
+        <p>Welcome to Bidcoin, the premier platform for crypto auctions. Here's how to get started:</p>
+
+        <div class="how-it-works-grid">
+            <div class="how-it-works-card">
+                <h3>1. Connect Your Wallet</h3>
+                <p>Link your cryptocurrency wallet to start bidding. We support various wallets including MetaMask, WalletConnect, and more.</p>
+            </div>
+
+            <div class="how-it-works-card">
+                <h3>2. Browse Auctions</h3>
+                <p>Explore our wide range of auctions, from cryptocurrencies and NFTs to real-world assets tokenized on the blockchain.</p>
+            </div>
+
+            <div class="how-it-works-card">
+                <h3>3. Place Your Bid</h3>
+                <p>When you find an item you're interested in, place your bid. Remember, all bids are final and cannot be retracted.</p>
+            </div>
+
+            <div class="how-it-works-card">
+                <h3>4. Track Your Auctions</h3>
+                <p>Keep an eye on your active bids and auctions you're interested in through your personalized dashboard.</p>
+            </div>
+
+            <div class="how-it-works-card">
+                <h3>5. Win and Collect</h3>
+                <p>If you're the highest bidder when the auction ends, congratulations! Follow the provided instructions to collect your item.</p>
+            </div>
+
+            <div class="how-it-works-card">
+                <h3>6. Stay Informed</h3>
+                <p>Keep up with the latest auctions, trends, and platform updates through our newsletter and social media channels.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Bidcoin Auction Marketplace. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            const userMenu = document.getElementById('userMenu');
+            const connectWallet = document.getElementById('connectWallet');
+            const userDropdown = document.getElementById('userDropdown');
+            const disconnectWallet = document.getElementById('disconnectWallet');
+
+            function updateUI(walletAddress) {
+                if (walletAddress) {
+                    userMenu.style.display = 'block';
+                    connectWallet.style.display = 'none';
+                    userDropdown.textContent = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+                } else {
+                    userMenu.style.display = 'none';
+                    connectWallet.style.display = 'block';
+                }
+            }
+
+            const storedWallet = localStorage.getItem('userWallet');
+            updateUI(storedWallet);
+
+            connectWalletBtn.addEventListener('click', async function() {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        const userAddress = accounts[0];
+                        localStorage.setItem('userWallet', userAddress);
+                        updateUI(userAddress);
+                    } catch (error) {
+                        console.error("User denied account access");
+                    }
+                } else {
+                    console.log('MetaMask is not installed');
+                    alert('Please install MetaMask to connect your wallet');
+                }
+            });
+
+            disconnectWallet.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('userWallet');
+                updateUI(null);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const walletAddress = document.getElementById('walletAddress');
+            const walletDropdown = document.getElementById('walletDropdown');
+            const disconnectWallet = document.getElementById('disconnectWallet');
+
+            function updateUI(address) {
+                if (address) {
+                    walletAddress.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+                } else {
+                    walletAddress.textContent = 'Connect Wallet';
+                }
+            }
+
+            function toggleDropdown() {
+                walletDropdown.classList.toggle('show');
+            }
+
+            walletAddress.addEventListener('click', async function() {
+                if (walletAddress.textContent === 'Connect Wallet') {
+                    if (typeof window.ethereum !== 'undefined') {
+                        try {
+                            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                            const userAddress = accounts[0];
+                            localStorage.setItem('userWallet', userAddress);
+                            updateUI(userAddress);
+                        } catch (error) {
+                            console.error("User denied account access");
+                        }
+                    } else {
+                        console.log('MetaMask is not installed');
+                        alert('Please install MetaMask to connect your wallet');
+                    }
+                } else {
+                    toggleDropdown();
+                }
+            });
+
+            disconnectWallet.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('userWallet');
+                updateUI(null);
+                toggleDropdown();
+            });
+
+            // Close the dropdown if the user clicks outside of it
+            window.onclick = function(event) {
+                if (!event.target.matches('.wallet-address')) {
+                    if (walletDropdown.classList.contains('show')) {
+                        walletDropdown.classList.remove('show');
+                    }
+                }
+            }
+
+            const storedWallet = localStorage.getItem('userWallet');
+            updateUI(storedWallet);
+        });
+    </script>
+</body>
+</html>

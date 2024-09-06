@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bidcoin Auction Marketplace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #CF4500; /* Mastercard Orange (Sinopia) */
+            --secondary-color: #000000; /* Black */
+            --tertiary-color: #323231; /* Dark Charcoal */
+            --background-color: #FFFFFF; /* White */
+            --text-color: #000000; /* Black */
+            --light-text-color: #FFFFFF; /* White */
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* General Styling for Header and Wallet Dropdown */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #fff;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.5rem; /* Adjusted for better readability */
+            color: var(--primary-color); /* Use consistent brand color */
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav ul li {
+            margin-left: 1.5rem; /* Adjust spacing */
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #000;
+            font-size: 1rem; /* Ensure font size is consistent */
+        }
+
+        /* Wallet Dropdown */
+        .wallet-dropdown {
+            position: relative;
+            display: flex;
+            align-items: center; /* Align wallet address with dropdown items */
+        }
+
+        .wallet-address {
+            cursor: pointer;
+            padding: 10px 15px; /* Add consistent padding */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f5f5f5;
+            font-weight: bold;
+            font-size: 1rem; /* Consistent font size */
+            color: #000; /* Ensure text is visible */
+        }
+
+        .wallet-address:hover {
+            background-color: #e0e0e0; /* Subtle hover effect */
+        }
+
+        /* Dropdown Styling */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #fff;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+            border-radius: 4px;
+            padding: 10px 0; /* Add padding inside the dropdown */
+        }
+
+        .dropdown-content a {
+            color: #000;
+            padding: 12px 16px; /* Adjust padding inside links */
+            text-decoration: none;
+            display: block;
+            font-size: 0.9rem; /* Slightly smaller font size */
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f1f1f1; /* Hover effect for dropdown items */
+        }
+
+        /* Show dropdown when clicked */
+        .show {
+            display: block;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .wallet-dropdown {
+                margin-top: 1rem;
+            }
+        }
+
+        main {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .top-auctions {
+            text-align: center;
+        }
+
+        .auction-items {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .auction-item {
+            background-color: var(--card-background);
+            border: 1px solid var(--secondary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .auction-item h3 {
+            color: var(--primary-color);
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .auction-item img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .auction-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .leader, .price, .time-left {
+            margin: 5px 0;
+        }
+
+        .auction-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--light-text-color);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .btn.track-auction {
+            background-color: var(--secondary-color);
+        }
+
+        .btn.track-auction:hover {
+            background-color: var(--tertiary-color);
+            color: var(--text-color);
+        }
+
+        footer {
+            background-color: var(--tertiary-color);
+            color: var(--light-text-color);
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: var(--background-color);
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid var(--tertiary-color);
+            width: 80%; /* Could be more or less, depending on screen size */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .close-btn {
+            color: var(--text-color);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .modal-btn, .wallet-btn {
+            background-color: var(--primary-color);
+            color: var(--light-text-color);
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .modal-btn:hover, .wallet-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .auction-link {
+            text-decoration: none; /* Remove underline from links */
+            color: inherit; /* Inherit color from parent */
+        }
+
+        .carousel-item ol {
+            padding-left: 20px; /* Align list items */
+            text-align: left; /* Left align text within list items */
+        }
+
+        .user-auth {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info {
+            margin-right: 1rem;
+        }
+
+        .login-button, .logout-button {
+            background-color: #323231;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .login-button:hover, .logout-button:hover {
+            background-color: #CF4500;
+        }
+
+        @media (max-width: 768px) {
+            .auction-page {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .auction-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .auction-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .auction-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .carousel-section {
+            margin: 40px 0;
+            text-align: center;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 300px;
+            margin: 0 auto;
+            overflow: hidden;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+        }
+
+        .carousel {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease;
+        }
+
+        .carousel-item {
+            flex: 0 0 100%;
+            padding: 20px 60px; /* Increased horizontal padding */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary-color);
+            color: var(--light-text-color);
+            border: none;
+            font-size: 24px;
+            padding: 10px 15px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.3s ease;
+        }
+
+        .carousel-nav-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        #prevBtn2 {
+            left: 10px;
+        }
+
+        #nextBtn2 {
+            right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .carousel-container {
+                height: 350px;
+            }
+            .carousel-item {
+                padding: 20px 40px; /* Slightly reduced padding for mobile */
+            }
+        }
+
+        .img-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .auction-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .newbies-only {
+            background-color: #4CAF50; /* Green */
+        }
+
+        .no-new-bidders {
+            background-color: #F44336; /* Red */
+        }
+
+        .confirmation-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 999;
+        }
+
+        .tracked {
+            background-color: var(--tertiary-color);
+            color: var(--light-text-color);
+        }
+
+        @media (max-width: 768px) {
+            .auction-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .auction-item {
+                min-height: auto;
+            }
+            
+            .auction-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Bidcoin Auction Marketplace</div>
+            <nav>
+                <ul id="navLinks">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="auction-listing.html">Auctions</a></li>
+                    <li><a href="howitworks.html">How It Works</a></li>
+                    <li><a href="#">About</a></li>
+                </ul>
+            </nav>
+            <div class="wallet-dropdown">
+                <span class="wallet-address" id="walletAddress">Connect Wallet</span>
+                <div class="dropdown-content" id="walletDropdown">
+                    <a href="dashboard.html">Dashboard</a> <!-- Added Dashboard link -->
+                    <a href="#" id="disconnectWallet">Disconnect</a>
+                </div>
+            </div>
+        </header>
+        
+        <main>
+            <section class="top-auctions">
+                <h2>Top Auctions</h2>
+                <div class="auction-items">
+                    <div class="auction-item" data-auction-id="1">
+                        <a href="auction-detail.html?id=1" class="auction-link">
+                            <h3>Lil Panz'</h3>
+                            <img src="https://bamtrial.standard.us-east-1.oortech.com/imgs/Y6kpM8nvuk37nBlD4FDkNUcDpbhvtJHG6Lw5j96bRcE.png" alt="Lil Panz'">
+                            <div class="auction-info">
+                                <p class="leader">Leader: <span class="leader-name">SatoshiNakamoto</span></p>
+                                <p class="price">Price: <span class="current-price">0.073 ETH</span></p>
+                                <p class="time-left">Time Left: <span class="countdown">00:10</span></p>
+                            </div>
+                        </a>
+                        <div class="auction-buttons">
+                            <button class="btn bid" onclick="showBidModal('1')">Bid</button>
+                            <button class="btn track-auction" data-auction-id="1" onclick="toggleTrackedAuction('1', 'Lil Panz\'', '0.073 ETH', 'https://bamtrial.standard.us-east-1.oortech.com/imgs/Y6kpM8nvuk37nBlD4FDkNUcDpbhvtJHG6Lw5j96bRcE.png', '00:10', 'SatoshiNakamoto')">Track Auction</button>
+                        </div>
+                    </div>
+                    <div class="auction-item" onclick="location.href='test.html'">
+                        <h3>500 Bids</h3>
+                        <div class="img-container">
+                            <img src="https://bamtrial.standard.us-east-1.oortech.com/imgs/bidpack.png" alt="500 Bids">
+                            <span class="auction-tag newbies-only">Newbies Only</span>
+                        </div>
+                        <div class="auction-info">
+                            <p class="leader">Leader: VitalikButerin</p>
+                            <p class="price">Price: 0.0001 BTC</p>
+                            <p class="time-left">Time Left: 00:09</p>
+                        </div>
+                        <div class="auction-buttons">
+                            <button class="btn bid">Bid</button>
+                            <button class="btn track-auction" data-auction-id="2" disabled>Track Auction</button>
+                        </div>
+                    </div>
+                    <div class="auction-item" onclick="location.href='test.html'">
+                        <h3>Mad Lads</h3>
+                        <div class="img-container">
+                            <img src="https://bamtrial.standard.us-east-1.oortech.com/imgs/mad-lads.jpg" alt="Mad Lads">
+                            <span class="auction-tag no-new-bidders">No New Bidders</span>
+                        </div>
+                        <div class="auction-info">
+                            <p class="leader">Leader: CharlieLee</p>
+                            <p class="price">Price: 4.23 SOL</p>
+                            <p class="time-left">Time Left: 00:10</p>
+                        </div>
+                        <div class="auction-buttons">
+                            <button class="btn bid">Bid</button>
+                            <button class="btn track-auction" data-auction-id="3" disabled>Track Auction</button>
+                        </div>
+                    </div>
+                    <div class="auction-item" onclick="location.href='test.html'">
+                        <h3>0.1 BTC</h3>
+                        <img src="https://bamtrial.standard.us-east-1.oortech.com/imgs/bitcoin.png" alt="0.1 BTC">
+                        <div class="auction-info">
+                            <p class="leader">Leader: BinanceCZ</p>
+                            <p class="price">Price: 0.015 BTC</p>
+                            <p class="time-left">Time Left: 00:10</p>
+                        </div>
+                        <div class="auction-buttons">
+                            <button class="btn bid">Bid</button>
+                            <button class="btn track-auction" data-auction-id="4" disabled>Track Auction</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- New How It Works Carousel Section -->
+            <section id="how-it-works" class="carousel-section how-it-works">
+                <h2>How It Works</h2>
+                <div class="carousel-container">
+                    <button id="prevBtn2" class="carousel-nav-btn">&lt;</button>
+                    <div class="carousel">
+                        <div class="carousel-item active">
+                            <h3>Bidding Process</h3>
+                            <p>Items show up on the auction tab for users to bid on. Users are able to bid within the last 15 seconds of the auction.</p>
+                        </div>
+                        <div class="carousel-item">
+                            <h3>Auto Bidding</h3>
+                            <p>Set auto bids to automatically place bids for you. Auto bids are stacked fairly among bidders until a winner emerges.</p>
+                        </div>
+                        <div class="carousel-item">
+                            <h3>Tracking Auctions</h3>
+                            <p>Use the "Track Auction" button to add the auction to your dashboard for live updates on bids and auction status.</p>
+                        </div>
+                        <div class="carousel-item">
+                            <h3>Winning and Payment</h3>
+                            <p>When you win an auction, you'll be notified and guided through the payment process to claim your item.</p>
+                        </div>
+                    </div>
+                    <button id="nextBtn2" class="carousel-nav-btn">&gt;</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 All Rights Reserved</p>
+            <p>Bidcoin Auction Marketplace</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script src="auction-functions.js"></script>
+    <script src="main.js"></script>
+    <script type="module" src="app.js"></script>
+    <script src="wallet.js"></script> <!-- Include the centralized wallet script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const walletAddress = document.getElementById('walletAddress');
+            const walletDropdown = document.getElementById('walletDropdown');
+            const disconnectWallet = document.getElementById('disconnectWallet');
+            
+            // Toggle dropdown when wallet address is clicked
+            walletAddress.addEventListener('click', function() {
+                walletDropdown.classList.toggle('show');
+            });
+
+            // Disconnect wallet logic
+            disconnectWallet.addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('userWallet');
+                updateWalletUI(null);  // Reset wallet UI
+                walletDropdown.classList.remove('show');
+            });
+
+            // Hide dropdown when clicking outside
+            window.addEventListener('click', function(event) {
+                if (!event.target.matches('.wallet-address')) {
+                    if (walletDropdown.classList.contains('show')) {
+                        walletDropdown.classList.remove('show');
+                    }
+                }
+            });
+
+            // Function to update wallet UI
+            function updateWalletUI(address) {
+                if (address) {
+                    walletAddress.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+                } else {
+                    walletAddress.textContent = 'Connect Wallet';
+                }
+            }
+
+            // Load stored wallet if available
+            const storedWallet = localStorage.getItem('userWallet');
+            if (storedWallet) {
+                updateWalletUI(storedWallet);
+            }
+
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            if (connectWalletBtn) {
+                connectWalletBtn.addEventListener('click', async function() {
+                    if (typeof window.ethereum !== 'undefined') {
+                        try {
+                            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                            const userAddress = accounts[0];
+                            localStorage.setItem('userWallet', userAddress);
+                            updateWalletUI(userAddress);
+                        } catch (error) {
+                            console.error("User denied account access or error occurred:", error);
+                            // Only show alert if there's an actual error
+                            if (error.code !== 4001) { // 4001 is the error code for user rejected request
+                                alert('Failed to connect wallet. Please try again.');
+                            }
+                        }
+                    } else {
+                        console.log('MetaMask is not installed');
+                        alert('Please install MetaMask to connect your wallet');
+                    }
+                });
+            }
+
+            // Initialize auction data
+            updateAuctionData();
+        });
+
+        function toggleTrackedAuction(auctionId, auctionName, currentPrice, image, timeLeft, leader) {
+            if (typeof window.toggleTrackedAuction === 'function') {
+                const isNowTracked = window.toggleTrackedAuction(auctionId, auctionName, currentPrice, image, timeLeft, leader);
+                const button = document.querySelector(`.track-auction[data-auction-id="${auctionId}"]`);
+                if (button) {
+                    button.textContent = isNowTracked ? 'Untrack Auction' : 'Track Auction';
+                    button.classList.toggle('tracked', isNowTracked);
+                }
+            } else {
+                console.error('toggleTrackedAuction function not found in global scope');
+            }
+        }
+
+        function showBidModal(auctionId) {
+            console.log(`Showing bid modal for auction ${auctionId}`);
+            // Implement actual modal display logic here
+        }
+
+        function updateAuctionData() {
+            // Implement actual auction data update logic here
+            console.log('Updating auction data');
+        }
+
+        // Only call renderAuctions if it's defined and there's auction data
+        if (typeof renderAuctions === 'function' && Array.isArray(window.auctions)) {
+            renderAuctions(window.auctions);
+        }
+    </script>
+</body>
+</html>
+
